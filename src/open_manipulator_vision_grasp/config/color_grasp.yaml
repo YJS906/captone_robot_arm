@@ -1,0 +1,120 @@
+detect_color_object:
+  ros__parameters:
+    color_topic: /camera/color/image_raw
+    depth_topic: /camera/depth/image_raw
+    camera_info_topic: /camera/depth/camera_info
+    output_frame: link1
+    target_pose_topic: /vision/target_pose
+    marker_topic: /vision/target_marker
+    debug_image_topic: /vision/debug_image
+    min_depth_m: 0.12
+    max_depth_m: 0.20
+    min_area_px: 500.0
+    sample_radius_px: 5
+    # Default: red objects. Tune with rqt_reconfigure/ros2 param for your object.
+    hsv_lower: [0, 80, 60]
+    hsv_upper: [12, 255, 255]
+    target_orientation_xyzw: [0.0, 0.0, 0.0, 1.0]
+    # Shape filter to accept rectangular / cuboid contours only
+    shape_filter_enabled: true
+    min_aspect_ratio: 0.65
+    max_aspect_ratio: 1.8
+    min_extent: 0.55
+    max_extent: 1.0
+    min_solidity: 0.80
+    max_solidity: 1.0
+    min_corner_count: 4
+    max_corner_count: 8
+
+detect_depth_object:
+  ros__parameters:
+    depth_topic: /camera/depth/image_raw
+    camera_info_topic: /camera/depth/camera_info
+    output_frame: link1
+    target_pose_topic: /vision/target_pose
+    marker_topic: /vision/target_marker
+    debug_image_topic: /vision/debug_image
+    min_depth_m: 0.12
+    max_depth_m: 0.20
+    closest_band_m: 0.04
+    min_area_px: 300.0
+    shape_filter_enabled: true
+    min_aspect_ratio: 0.5
+    max_aspect_ratio: 3.0
+    min_extent: 0.30
+    max_extent: 1.0
+    min_solidity: 0.70
+    max_solidity: 1.0
+    min_bottom_to_top_width_ratio: 0.6
+    max_bottom_to_top_width_ratio: 1.80
+    min_width_profile_samples: 8
+    sample_radius_px: 5
+    roi_x: 0
+    roi_y: 0
+    roi_width: -1
+    roi_height: -1
+    target_orientation_xyzw: [0.0, 0.0, 0.0, 1.0]
+
+color_grasp_moveit:
+  ros__parameters:
+    target_pose_topic: /vision/target_pose
+    arm_group: arm
+    gripper_group: gripper
+    execute_on_target: false
+    auto_execute_cooldown_sec: 10.0
+    open_gripper_target: open
+    close_gripper_target: close
+    approach_height_m: 0.08
+    prepare_approach_height_m: 0.15
+    grasp_height_m: 0.05
+    lift_height_m: 0.20
+    lift_wait_sec: 1.0
+    use_joint_lift_pose: true
+    lift_joint1_rad: -1.4835298642
+    lift_joint2_rad: -0.1919862177
+    lift_joint3_rad: -0.4712388980
+    lift_joint4_rad: 2.181661565
+    cartesian_eef_step_m: 0.01
+    cartesian_jump_threshold: 0.0
+    cartesian_min_fraction: 0.9
+    assume_close_after_timeout: false
+    close_gripper_timeout_sec: 1.5
+    use_custom_close_position: true
+    close_gripper_joint_name: gripper_left_joint
+    close_gripper_joint_position_m: -0.005
+    position_tolerance_m: 0.02
+    orientation_tolerance_rad: 0.25
+    max_target_radius_m: 0.36
+    min_target_z_m: -0.20
+    max_target_z_m: 0.28
+
+arduino_metal_sensor:
+  ros__parameters:
+    serial_port: /dev/ttyACM0
+    baudrate: 9600
+    sensor_state_topic: /metal_sensor/any_detected
+    command_topic: /arduino/command
+    event_topic: /arduino/events
+    raw_topic: /arduino/raw
+    read_timeout_sec: 0.1
+    publish_raw: false
+
+metal_grasp_coordinator:
+  ros__parameters:
+    metal_topic: /metal_sensor/any_detected
+    target_pose_topic: /vision/target_pose
+    motor_command_topic: /arduino/command
+    prepare_service_name: /prepare_grasp_pose
+    pick_service_name: /pick_latest_target
+    finish_service_name: /finish_grasp_pose
+    pose_stable_time_sec: 0.0
+    pose_position_tolerance_m: 0.10
+    pose_orientation_tolerance_rad: 0.35
+    motor_power_percent: 100
+    motor_run_time_ms: 3000
+    metal_hold_time_sec: 0.3
+    pick_cooldown_sec: 10.0
+    recapture_target_after_return: true
+    target_after_return_timeout_sec: 5.0
+    target_after_return_stable_time_sec: 0.3
+    use_pick_latest_after_return: true
