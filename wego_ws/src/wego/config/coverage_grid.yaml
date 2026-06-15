@@ -1,0 +1,86 @@
+# Coverage grid config used by wego/scripts/coverage_path_planner.py.
+# Keep the original Nav2 map YAML/PGM clean. Put coverage-only metadata here.
+
+# One grid cell size in meters.
+coverage_cell_size: 0.3
+
+# Use the four points below as the coverage rectangle.
+# corner_points is [x1, y1, x2, y2, x3, y3, x4, y4] in the map frame.
+corner_mode: param
+corner_points: '-0.247,-1.621,0.972,-1.471,0.739,0.325,-0.502,0.197'
+
+# cell_centers: visit every grid cell center in ㄷ자 priority order.
+# stripe_endpoints: visit only stripe endpoints.
+path_strategy: cell_centers
+
+# x: sweep left/right rows, y: sweep up/down columns.
+stripe_axis: x
+
+# path_follower: follow the generated coverage path with /cmd_vel.
+# nav2: send each coverage point to NavigateToPose.
+execution_mode: path_follower
+
+# Differential pure-pursuit follower settings.
+robot_base_frame: base_link
+cmd_vel_topic: /cmd_vel
+linear_speed: 0.08
+lookahead_distance: 0.15
+max_angular_speed: 0.25
+goal_tolerance: 0.07
+straight_goal_tolerance: 0.09
+corner_goal_tolerance: 0.05
+return_goal_tolerance: 0.08
+corner_angle_threshold: 0.5
+yaw_tolerance: 0.07
+rotate_to_path_yaw: 0.35
+enable_reverse_goal_recovery: true
+reverse_speed: 0.04
+reverse_goal_recovery_distance: 0.25
+path_interpolation_resolution: 0.05
+
+# Keep generated target centers away from the selected rectangle boundary.
+coverage_boundary_margin: 0.15
+
+# Stop before driving into a close front obstacle.
+scan_topic: /scan
+enable_obstacle_stop: true
+front_obstacle_stop_distance: 0.12
+front_obstacle_angle: 0.8
+
+# false means all centers inside the rectangle become goals.
+# true means only centers that are free in /map become goals.
+require_free_cell_center: true
+
+# Demonstration start policy.
+# safe_zone_point is the fixed map-frame start point. Example: "0.12,-1.33".
+start_direction_mode: safe_zone_nearest_corner
+safe_zone_point: '0.0185,-1.298'
+safe_zone_path_index: 1
+require_start_in_safe_zone: true
+safe_zone_start_tolerance: 0.25
+reset_to_safe_zone_on_start: true
+return_to_safe_zone_on_complete: true
+return_to_safe_zone_on_mine: true
+# Fixed robot yaw after returning to safe zone with a mine, before arm drop.
+# Unit: radians. 0.0 means facing the map +X direction.
+safe_zone_drop_yaw_rad: -1.5708
+
+# Metal sensor / arm integration.
+# mine_detection_mode: sensor, simulated, or both.
+mine_detection_mode: sensor
+metal_events_topic: /arduino/events
+metal_state_topic: /metal_sensor/any_detected
+metal_event_keywords: METAL,metal_detected,detected
+arm_sequence_service: /run_metal_grasp_sequence
+arm_sequence_service_timeout: 120.0
+arm_drop_service: /drop_mine_at_safe_zone
+arm_drop_service_timeout: 120.0
+metal_backup_distance: 0.09
+metal_backup_speed: 0.03
+continue_after_arm_failure: false
+mission_status_topic: /coverage_mission_status
+
+# Comma-separated 1-based coverage path numbers shown in RViz.
+# Example: '7,12'
+# Return paths use A* over grid centers and avoid unvisited or detected mine grids.
+simulated_mine_path_indices: ''

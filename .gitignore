@@ -1,9 +1,13 @@
 build/
 install/
 log/
-local_debs/
+Log/
+.vscode/
+.ros/
+*.zip
+*.bag
+*.db3
 *.deb
 *.pyc
 __pycache__/
-.vscode/
-.ros/
+
