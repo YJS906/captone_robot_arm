@@ -4,12 +4,13 @@ ROS 2 Humble 기반의 LIMO 자율주행 차량, OpenMANIPULATOR-X 로봇팔, RG
 
 본 프로젝트는 차량이 지정된 grid 영역을 탐색하다가 금속 물체를 감지하면 차량을 정지 및 후진시키고, 로봇팔과 Arduino 송풍 모터를 이용해 지뢰 모형 주변을 정리한 뒤 카메라로 목표 pose를 재검출하여 지뢰 모형을 집어 안전지대로 운반하는 흐름을 구현합니다.
 
-Demo Video
+## Demo Video
 
-아래 썸네일을 클릭하면 프로젝트 시연 영상으로 이동합니다.
+LIMO 지뢰 탐지 및 OpenManipulator 수거 시스템
 
-Repository Structure
-
+<a href="https://youtu.be/AcADcXJuaxs?si=a4T9PJYDxr5ZYq_a">
+  <img src="https://img.youtube.com/vi/AcADcXJuaxs/hqdefault.jpg" width="900" alt="Capstone Design LIMO Mine Detection and OpenManipulator Collection Demo">
+</a>
 .
 ├── robot_arm_ws/
 │   └── src/
