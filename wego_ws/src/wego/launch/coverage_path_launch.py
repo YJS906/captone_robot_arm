@@ -56,6 +56,11 @@ def generate_launch_description():
     arm_drop_service_timeout = LaunchConfiguration('arm_drop_service_timeout')
     metal_backup_distance = LaunchConfiguration('metal_backup_distance')
     metal_backup_speed = LaunchConfiguration('metal_backup_speed')
+    arm_sequence_retry_on_target_timeout = LaunchConfiguration(
+        'arm_sequence_retry_on_target_timeout')
+    arm_sequence_retry_count = LaunchConfiguration('arm_sequence_retry_count')
+    arm_sequence_retry_backup_distance = LaunchConfiguration(
+        'arm_sequence_retry_backup_distance')
     continue_after_arm_failure = LaunchConfiguration('continue_after_arm_failure')
     mission_status_topic = LaunchConfiguration('mission_status_topic')
     scan_topic = LaunchConfiguration('scan_topic')
@@ -315,6 +320,21 @@ def generate_launch_description():
             description='Reverse speed before arm sequence after metal detection'),
 
         DeclareLaunchArgument(
+            'arm_sequence_retry_on_target_timeout',
+            default_value='true',
+            description='Retry arm/blower sequence if no fresh target pose is detected after return'),
+
+        DeclareLaunchArgument(
+            'arm_sequence_retry_count',
+            default_value='1',
+            description='Number of extra arm/blower retries after target-pose timeout'),
+
+        DeclareLaunchArgument(
+            'arm_sequence_retry_backup_distance',
+            default_value='0.03',
+            description='Reverse distance before retrying arm/blower sequence after target-pose timeout'),
+
+        DeclareLaunchArgument(
             'continue_after_arm_failure',
             default_value='false',
             description='If true, return to safe zone even if arm sequence fails'),
@@ -415,6 +435,12 @@ def generate_launch_description():
                 'arm_drop_service_timeout': ParameterValue(arm_drop_service_timeout, value_type=float),
                 'metal_backup_distance': ParameterValue(metal_backup_distance, value_type=float),
                 'metal_backup_speed': ParameterValue(metal_backup_speed, value_type=float),
+                'arm_sequence_retry_on_target_timeout': ParameterValue(
+                    arm_sequence_retry_on_target_timeout, value_type=bool),
+                'arm_sequence_retry_count': ParameterValue(
+                    arm_sequence_retry_count, value_type=int),
+                'arm_sequence_retry_backup_distance': ParameterValue(
+                    arm_sequence_retry_backup_distance, value_type=float),
                 'continue_after_arm_failure': ParameterValue(
                     continue_after_arm_failure, value_type=bool),
                 'mission_status_topic': ParameterValue(mission_status_topic, value_type=str),

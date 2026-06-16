@@ -89,6 +89,9 @@ class CoveragePathPlanner(Node):
         self.declare_parameter('arm_drop_service_timeout', 120.0)
         self.declare_parameter('metal_backup_distance', 0.05)
         self.declare_parameter('metal_backup_speed', 0.03)
+        self.declare_parameter('arm_sequence_retry_on_target_timeout', True)
+        self.declare_parameter('arm_sequence_retry_count', 1)
+        self.declare_parameter('arm_sequence_retry_backup_distance', 0.03)
         self.declare_parameter('continue_after_arm_failure', False)
         self.declare_parameter('mission_status_topic', '/coverage_mission_status')
         self.declare_parameter('scan_topic', '/scan')
@@ -172,6 +175,12 @@ class CoveragePathPlanner(Node):
             self.get_parameter('arm_drop_service_timeout').value)
         self.metal_backup_distance = float(self.get_parameter('metal_backup_distance').value)
         self.metal_backup_speed = float(self.get_parameter('metal_backup_speed').value)
+        self.arm_sequence_retry_on_target_timeout = bool(
+            self.get_parameter('arm_sequence_retry_on_target_timeout').value)
+        self.arm_sequence_retry_count = int(
+            self.get_parameter('arm_sequence_retry_count').value)
+        self.arm_sequence_retry_backup_distance = float(
+            self.get_parameter('arm_sequence_retry_backup_distance').value)
         self.continue_after_arm_failure = bool(
             self.get_parameter('continue_after_arm_failure').value)
         self.mission_status_topic = self.get_parameter('mission_status_topic').value
@@ -216,6 +225,11 @@ class CoveragePathPlanner(Node):
             raise ValueError('metal_backup_distance must be greater than or equal to 0.0')
         if self.metal_backup_speed <= 0.0:
             raise ValueError('metal_backup_speed must be greater than 0.0')
+        if self.arm_sequence_retry_count < 0:
+            raise ValueError('arm_sequence_retry_count must be greater than or equal to 0')
+        if self.arm_sequence_retry_backup_distance < 0.0:
+            raise ValueError(
+                'arm_sequence_retry_backup_distance must be greater than or equal to 0.0')
         if self.coverage_boundary_margin < 0.0:
             raise ValueError('coverage_boundary_margin must be greater than or equal to 0.0')
         if self.front_obstacle_stop_distance <= 0.0:
@@ -308,6 +322,8 @@ class CoveragePathPlanner(Node):
         self.arm_drop_future = None
         self.arm_drop_start_time = None
         self.metal_backup_start_pose = None
+        self.active_metal_backup_distance = self.metal_backup_distance
+        self.arm_sequence_retry_attempt = 0
         self.metal_event_cell = None
         self.metal_resume_index = None
         self.carried_mine_cell = None
@@ -398,6 +414,16 @@ class CoveragePathPlanner(Node):
         self.metal_backup_distance = float(
             config.get('metal_backup_distance', self.metal_backup_distance))
         self.metal_backup_speed = float(config.get('metal_backup_speed', self.metal_backup_speed))
+        self.arm_sequence_retry_on_target_timeout = bool(
+            config.get(
+                'arm_sequence_retry_on_target_timeout',
+                self.arm_sequence_retry_on_target_timeout))
+        self.arm_sequence_retry_count = int(
+            config.get('arm_sequence_retry_count', self.arm_sequence_retry_count))
+        self.arm_sequence_retry_backup_distance = float(
+            config.get(
+                'arm_sequence_retry_backup_distance',
+                self.arm_sequence_retry_backup_distance))
         self.continue_after_arm_failure = bool(
             config.get('continue_after_arm_failure', self.continue_after_arm_failure))
         self.mission_status_topic = config.get('mission_status_topic', self.mission_status_topic)
@@ -515,9 +541,12 @@ class CoveragePathPlanner(Node):
         self.metal_event_cell = event_cell
         self.metal_resume_index = resume_index
         self.metal_backup_start_pose = (robot_x, robot_y)
+        self.active_metal_backup_distance = self.metal_backup_distance
+        self.arm_sequence_retry_attempt = 0
         self.metal_sequence_future = None
         self.metal_sequence_start_time = None
-        self.metal_handling_state = 'backup' if self.metal_backup_distance > 0.0 else 'call_arm'
+        self.metal_handling_state = (
+            'backup' if self.active_metal_backup_distance > 0.0 else 'call_arm')
         self.publish_mission_status(
             'metal_detected: event="%s", cell=%s' % (event_text, str(event_cell)))
 
@@ -1239,7 +1268,7 @@ class CoveragePathPlanner(Node):
         robot_x, robot_y, _ = robot_pose
         start_x, start_y = self.metal_backup_start_pose
         backed_distance = math.hypot(robot_x - start_x, robot_y - start_y)
-        if backed_distance >= self.metal_backup_distance:
+        if backed_distance >= self.active_metal_backup_distance:
             self.publish_stop()
             self.metal_handling_state = 'call_arm'
             self.publish_mission_status('backup_complete: %.3f m' % backed_distance)
@@ -1290,7 +1319,46 @@ class CoveragePathPlanner(Node):
             self.finish_metal_handling_success()
             return
 
+        if self.should_retry_arm_sequence(result.message):
+            self.start_arm_sequence_retry(result.message)
+            return
+
         self.fail_metal_handling('failed: arm sequence failed: %s' % result.message)
+
+    def should_retry_arm_sequence(self, message):
+        if not self.arm_sequence_retry_on_target_timeout:
+            return False
+        if self.arm_sequence_retry_attempt >= self.arm_sequence_retry_count:
+            return False
+        lowered = message.lower()
+        return (
+            'target pose' in lowered or
+            'fresh target' in lowered or
+            'timed out waiting' in lowered)
+
+    def start_arm_sequence_retry(self, reason):
+        robot_pose = self.get_robot_pose()
+        if robot_pose is None:
+            self.fail_metal_handling('failed: cannot localize robot before arm sequence retry')
+            return
+
+        self.arm_sequence_retry_attempt += 1
+        robot_x, robot_y, _ = robot_pose
+        self.publish_stop()
+        self.metal_backup_start_pose = (robot_x, robot_y)
+        self.active_metal_backup_distance = self.arm_sequence_retry_backup_distance
+        self.metal_sequence_future = None
+        self.metal_sequence_start_time = None
+        self.metal_handling_state = (
+            'backup' if self.active_metal_backup_distance > 0.0 else 'call_arm')
+        self.publish_mission_status(
+            'arm_sequence_retry: target not detected after blower/return, '
+            'backing up %.3f m and retrying (%d/%d). reason="%s"'
+            % (
+                self.active_metal_backup_distance,
+                self.arm_sequence_retry_attempt,
+                self.arm_sequence_retry_count,
+                reason))
 
     def finish_metal_handling_success(self):
         event_cell = self.metal_event_cell
@@ -1339,6 +1407,8 @@ class CoveragePathPlanner(Node):
         self.metal_sequence_future = None
         self.metal_sequence_start_time = None
         self.metal_backup_start_pose = None
+        self.active_metal_backup_distance = self.metal_backup_distance
+        self.arm_sequence_retry_attempt = 0
         self.metal_event_cell = None
         self.metal_resume_index = None
 

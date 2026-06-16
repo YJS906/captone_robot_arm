@@ -88,10 +88,22 @@ color_grasp_moveit:
     pre_motor_pose2_joint2_rad: 1.0297442587   # 59 deg
     pre_motor_pose2_joint3_rad: 0.2268928028   # 13 deg
     pre_motor_pose2_joint4_rad: 0.1570796327   # 9 deg
-    drop_pose_joint1_rad: -2.3038346126  # -132 deg
-    drop_pose_joint2_rad: 1.5009831567   # 86 deg
-    drop_pose_joint3_rad: -0.6806784083  # -39 deg
-    drop_pose_joint4_rad: 0.1919862177   # 11 deg
+    drop_pose1_joint1_rad: -2.3911010752  # -137 deg
+    drop_pose1_joint2_rad: -0.2617993878  # -15 deg
+    drop_pose1_joint3_rad: 0.0            # 0 deg
+    drop_pose1_joint4_rad: 1.6929693744   # 97 deg
+    drop_pose2_joint1_rad: -2.3911010752  # -137 deg
+    drop_pose2_joint2_rad: 0.5410520681   # 31 deg
+    drop_pose2_joint3_rad: -0.6457718232  # -37 deg
+    drop_pose2_joint4_rad: 1.6929693744   # 97 deg
+    drop_pose3_joint1_rad: -2.3911010752  # -137 deg
+    drop_pose3_joint2_rad: 0.9599310886   # 55 deg
+    drop_pose3_joint3_rad: -0.5934119457  # -34 deg
+    drop_pose3_joint4_rad: 1.2566370614   # 72 deg
+    drop_pose4_joint1_rad: -2.3911010752  # -137 deg
+    drop_pose4_joint2_rad: 1.4311699866   # 82 deg
+    drop_pose4_joint3_rad: -0.7679448709  # -44 deg
+    drop_pose4_joint4_rad: 0.7504915784   # 43 deg
     cartesian_eef_step_m: 0.01
     cartesian_jump_threshold: 0.0
     cartesian_min_fraction: 0.9
@@ -104,7 +116,7 @@ color_grasp_moveit:
     close_gripper_before_pre_motor_pose: true
     use_custom_close_position: true
     close_gripper_joint_name: gripper_left_joint
-    close_gripper_joint_position_m: -0.005
+    close_gripper_joint_position_m: -0.033
     position_tolerance_m: 0.02
     orientation_tolerance_rad: 0.25
     max_target_radius_m: 0.36
@@ -142,6 +154,9 @@ metal_grasp_coordinator:
     recapture_target_after_return: true
     target_after_return_timeout_sec: 100.0
     target_after_return_stable_time_sec: 0.3
+    extra_pick_attempts_after_lift: 1
+    extra_pick_target_timeout_sec: 2.0
+    extra_pick_target_stable_time_sec: 0.3
     service_call_timeout_sec: 60.0
     use_pick_latest_after_return: true
     enable_auto_sequence: false

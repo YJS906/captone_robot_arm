@@ -43,10 +43,22 @@ public:
     pre_motor_pose2_joint2_rad_ = declare_parameter<double>("pre_motor_pose2_joint2_rad", 1.0297442587);
     pre_motor_pose2_joint3_rad_ = declare_parameter<double>("pre_motor_pose2_joint3_rad", 0.2268928028);
     pre_motor_pose2_joint4_rad_ = declare_parameter<double>("pre_motor_pose2_joint4_rad", 0.1570796327);
-    drop_pose_joint1_rad_ = declare_parameter<double>("drop_pose_joint1_rad", -2.3038346126);
-    drop_pose_joint2_rad_ = declare_parameter<double>("drop_pose_joint2_rad", 1.5009831567);
-    drop_pose_joint3_rad_ = declare_parameter<double>("drop_pose_joint3_rad", -0.6806784083);
-    drop_pose_joint4_rad_ = declare_parameter<double>("drop_pose_joint4_rad", 0.1919862177);
+    drop_pose1_joint1_rad_ = declare_parameter<double>("drop_pose1_joint1_rad", -2.3911010752);
+    drop_pose1_joint2_rad_ = declare_parameter<double>("drop_pose1_joint2_rad", -0.2617993878);
+    drop_pose1_joint3_rad_ = declare_parameter<double>("drop_pose1_joint3_rad", 0.0);
+    drop_pose1_joint4_rad_ = declare_parameter<double>("drop_pose1_joint4_rad", 1.6929693744);
+    drop_pose2_joint1_rad_ = declare_parameter<double>("drop_pose2_joint1_rad", -2.3911010752);
+    drop_pose2_joint2_rad_ = declare_parameter<double>("drop_pose2_joint2_rad", 0.5410520681);
+    drop_pose2_joint3_rad_ = declare_parameter<double>("drop_pose2_joint3_rad", -0.6457718232);
+    drop_pose2_joint4_rad_ = declare_parameter<double>("drop_pose2_joint4_rad", 1.6929693744);
+    drop_pose3_joint1_rad_ = declare_parameter<double>("drop_pose3_joint1_rad", -2.3911010752);
+    drop_pose3_joint2_rad_ = declare_parameter<double>("drop_pose3_joint2_rad", 0.9599310886);
+    drop_pose3_joint3_rad_ = declare_parameter<double>("drop_pose3_joint3_rad", -0.5934119457);
+    drop_pose3_joint4_rad_ = declare_parameter<double>("drop_pose3_joint4_rad", 1.2566370614);
+    drop_pose4_joint1_rad_ = declare_parameter<double>("drop_pose4_joint1_rad", -2.3911010752);
+    drop_pose4_joint2_rad_ = declare_parameter<double>("drop_pose4_joint2_rad", 1.4311699866);
+    drop_pose4_joint3_rad_ = declare_parameter<double>("drop_pose4_joint3_rad", -0.7679448709);
+    drop_pose4_joint4_rad_ = declare_parameter<double>("drop_pose4_joint4_rad", 0.7504915784);
     cartesian_eef_step_m_ = declare_parameter<double>("cartesian_eef_step_m", 0.01);
     cartesian_jump_threshold_ = declare_parameter<double>("cartesian_jump_threshold", 0.0);
     cartesian_min_fraction_ = declare_parameter<double>("cartesian_min_fraction", 0.9);
@@ -639,11 +651,41 @@ private:
   bool dropMineAtSafeZone()
   {
     if (!moveArmToJointPose(
-        "safe zone drop pose",
-        drop_pose_joint1_rad_,
-        drop_pose_joint2_rad_,
-        drop_pose_joint3_rad_,
-        drop_pose_joint4_rad_))
+        "safe zone drop pose 1",
+        drop_pose1_joint1_rad_,
+        drop_pose1_joint2_rad_,
+        drop_pose1_joint3_rad_,
+        drop_pose1_joint4_rad_))
+    {
+      return false;
+    }
+
+    if (!moveArmToJointPose(
+        "safe zone drop pose 2",
+        drop_pose2_joint1_rad_,
+        drop_pose2_joint2_rad_,
+        drop_pose2_joint3_rad_,
+        drop_pose2_joint4_rad_))
+    {
+      return false;
+    }
+
+    if (!moveArmToJointPose(
+        "safe zone drop pose 3",
+        drop_pose3_joint1_rad_,
+        drop_pose3_joint2_rad_,
+        drop_pose3_joint3_rad_,
+        drop_pose3_joint4_rad_))
+    {
+      return false;
+    }
+
+    if (!moveArmToJointPose(
+        "safe zone drop pose 4",
+        drop_pose4_joint1_rad_,
+        drop_pose4_joint2_rad_,
+        drop_pose4_joint3_rad_,
+        drop_pose4_joint4_rad_))
     {
       return false;
     }
@@ -651,6 +693,36 @@ private:
     const auto open_target = get_parameter_or<std::string>("open_gripper_target", "open");
     if (!moveGripper(open_target)) {
       RCLCPP_WARN(get_logger(), "dropMineAtSafeZone failed: opening gripper failed.");
+      return false;
+    }
+
+    if (!moveArmToJointPose(
+        "safe zone drop return pose 3",
+        drop_pose3_joint1_rad_,
+        drop_pose3_joint2_rad_,
+        drop_pose3_joint3_rad_,
+        drop_pose3_joint4_rad_))
+    {
+      return false;
+    }
+
+    if (!moveArmToJointPose(
+        "safe zone drop return pose 2",
+        drop_pose2_joint1_rad_,
+        drop_pose2_joint2_rad_,
+        drop_pose2_joint3_rad_,
+        drop_pose2_joint4_rad_))
+    {
+      return false;
+    }
+
+    if (!moveArmToJointPose(
+        "safe zone drop return pose 1",
+        drop_pose1_joint1_rad_,
+        drop_pose1_joint2_rad_,
+        drop_pose1_joint3_rad_,
+        drop_pose1_joint4_rad_))
+    {
       return false;
     }
 
@@ -770,10 +842,22 @@ private:
   double pre_motor_pose2_joint2_rad_{1.0297442587};
   double pre_motor_pose2_joint3_rad_{0.2268928028};
   double pre_motor_pose2_joint4_rad_{0.1570796327};
-  double drop_pose_joint1_rad_{-2.3038346126};
-  double drop_pose_joint2_rad_{1.5009831567};
-  double drop_pose_joint3_rad_{-0.6806784083};
-  double drop_pose_joint4_rad_{0.1919862177};
+  double drop_pose1_joint1_rad_{-2.3911010752};
+  double drop_pose1_joint2_rad_{-0.2617993878};
+  double drop_pose1_joint3_rad_{0.0};
+  double drop_pose1_joint4_rad_{1.6929693744};
+  double drop_pose2_joint1_rad_{-2.3911010752};
+  double drop_pose2_joint2_rad_{0.5410520681};
+  double drop_pose2_joint3_rad_{-0.6457718232};
+  double drop_pose2_joint4_rad_{1.6929693744};
+  double drop_pose3_joint1_rad_{-2.3911010752};
+  double drop_pose3_joint2_rad_{0.9599310886};
+  double drop_pose3_joint3_rad_{-0.5934119457};
+  double drop_pose3_joint4_rad_{1.2566370614};
+  double drop_pose4_joint1_rad_{-2.3911010752};
+  double drop_pose4_joint2_rad_{1.4311699866};
+  double drop_pose4_joint3_rad_{-0.7679448709};
+  double drop_pose4_joint4_rad_{0.7504915784};
   double cartesian_eef_step_m_{0.01};
   double cartesian_jump_threshold_{0.0};
   double cartesian_min_fraction_{0.9};

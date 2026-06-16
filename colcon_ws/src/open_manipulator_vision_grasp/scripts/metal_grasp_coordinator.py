@@ -39,6 +39,9 @@ class MetalGraspCoordinator(Node):
         self.declare_parameter('recapture_target_after_return', True)
         self.declare_parameter('target_after_return_timeout_sec', 5.0)
         self.declare_parameter('target_after_return_stable_time_sec', 0.3)
+        self.declare_parameter('extra_pick_attempts_after_lift', 1)
+        self.declare_parameter('extra_pick_target_timeout_sec', 2.0)
+        self.declare_parameter('extra_pick_target_stable_time_sec', 0.3)
         self.declare_parameter('service_call_timeout_sec', 60.0)
         self.declare_parameter('use_pick_latest_after_return', True)
         self.declare_parameter('enable_auto_sequence', False)
@@ -68,6 +71,12 @@ class MetalGraspCoordinator(Node):
             self.get_parameter('target_after_return_timeout_sec').value)
         self.target_after_return_stable_time_sec = float(
             self.get_parameter('target_after_return_stable_time_sec').value)
+        self.extra_pick_attempts_after_lift = int(
+            self.get_parameter('extra_pick_attempts_after_lift').value)
+        self.extra_pick_target_timeout_sec = float(
+            self.get_parameter('extra_pick_target_timeout_sec').value)
+        self.extra_pick_target_stable_time_sec = float(
+            self.get_parameter('extra_pick_target_stable_time_sec').value)
         self.service_call_timeout_sec = float(
             self.get_parameter('service_call_timeout_sec').value)
         self.use_pick_latest_after_return = bool(
@@ -285,7 +294,7 @@ class MetalGraspCoordinator(Node):
             if not self.call_service(self.pick_client, 'pick_latest_target'):
                 self.get_logger().error('Failed to pick latest target after return.')
                 return False
-            return True
+            return self.execute_extra_pick_attempts_after_lift()
 
         if self.recapture_target_after_return:
             if not self.call_service(self.capture_client, 'capture_pending_target'):
@@ -299,7 +308,61 @@ class MetalGraspCoordinator(Node):
             self.get_logger().error('Failed to finish grasp pose.')
             return False
 
+        return self.execute_extra_pick_attempts_after_lift()
+
+    def execute_extra_pick_attempts_after_lift(self) -> bool:
+        if self.extra_pick_attempts_after_lift <= 0:
+            return True
+
+        for attempt in range(1, self.extra_pick_attempts_after_lift + 1):
+            if not self.wait_for_optional_fresh_target(
+                f'after lift retry {attempt}',
+                self.extra_pick_target_timeout_sec,
+                self.extra_pick_target_stable_time_sec):
+                self.get_logger().info(
+                    'No remaining target detected after lift; pick sequence is complete.')
+                return True
+
+            self.get_logger().warn(
+                'Target is still detected after lift. Retrying pick_latest_target '
+                f'({attempt}/{self.extra_pick_attempts_after_lift}).')
+            if not self.call_service(self.pick_client, 'pick_latest_target'):
+                self.get_logger().error('Extra pick attempt after lift failed.')
+                return False
+
         return True
+
+    def wait_for_optional_fresh_target(
+        self,
+        label: str,
+        timeout_sec: float,
+        stable_time_sec: float) -> bool:
+        start_time = self.get_clock().now()
+        self.get_logger().info(f'Checking for an optional fresh target pose {label}.')
+
+        while rclpy.ok():
+            now = self.get_clock().now()
+            elapsed_wait = (now - start_time).nanoseconds / 1e9
+            if elapsed_wait > timeout_sec:
+                return False
+
+            with self.pose_lock:
+                pose_time = self.last_pose_receive_time
+                stable_time = self.pose_stable_time
+
+            if (
+                pose_time is not None and
+                stable_time is not None and
+                pose_time.nanoseconds >= start_time.nanoseconds
+            ):
+                elapsed_stable = (now - stable_time).nanoseconds / 1e9
+                if elapsed_stable >= stable_time_sec:
+                    self.get_logger().info(f'Optional fresh target pose {label} is stable.')
+                    return True
+
+            time.sleep(0.05)
+
+        return False
 
     def wait_for_fresh_target(self, label: str, timeout_sec: float, stable_time_sec: float) -> bool:
         start_time = self.get_clock().now()

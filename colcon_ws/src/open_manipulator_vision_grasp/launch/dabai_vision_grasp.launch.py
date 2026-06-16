@@ -62,8 +62,8 @@ def generate_launch_description():
         DeclareLaunchArgument('base_frame', default_value='link1'),
         DeclareLaunchArgument('camera_frame', default_value='camera_link'),
         DeclareLaunchArgument('camera_x', default_value='0.00'),   #옆으로 +는 왼쪽 
-        DeclareLaunchArgument('camera_y', default_value='-0.0204'),  # 앞으로  -는 앞으로 
-        DeclareLaunchArgument('camera_z', default_value='-0.23'),
+        DeclareLaunchArgument('camera_y', default_value='-0.045'),  # 앞으로  -는 앞으로
+        DeclareLaunchArgument('camera_z', default_value='-0.225'),
         DeclareLaunchArgument('camera_roll', default_value='0.0'),
         DeclareLaunchArgument('camera_pitch', default_value='0.0'),
         DeclareLaunchArgument('camera_yaw', default_value='-1.57079632679'),

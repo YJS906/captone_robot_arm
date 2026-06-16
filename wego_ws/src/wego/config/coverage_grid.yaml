@@ -75,8 +75,11 @@ arm_sequence_service: /run_metal_grasp_sequence
 arm_sequence_service_timeout: 120.0
 arm_drop_service: /drop_mine_at_safe_zone
 arm_drop_service_timeout: 120.0
-metal_backup_distance: 0.09
+metal_backup_distance: 0.075
 metal_backup_speed: 0.03
+arm_sequence_retry_on_target_timeout: true
+arm_sequence_retry_count: 1
+arm_sequence_retry_backup_distance: 0.03
 continue_after_arm_failure: false
 mission_status_topic: /coverage_mission_status
 
